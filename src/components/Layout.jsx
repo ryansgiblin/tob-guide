@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { rooms } from '../data/rooms';
 
 // Sword icon SVG (decorative, OSRS feel)
 const SwordIcon = () => (
@@ -19,7 +18,7 @@ const MenuIcon = () => (
   </svg>
 );
 
-export default function Layout({ current, onSelect, children }) {
+export default function Layout({ current, onSelect, children, rooms }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const SidebarContent = () => (
@@ -60,6 +59,16 @@ export default function Layout({ current, onSelect, children }) {
 
         {/* Divider */}
         <div className="gold-divider mx-4 my-3" />
+
+        {/* Role Setups link */}
+        <button
+          className={`sidebar-item w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 ${current === 'setups' ? 'active' : ''}`}
+          style={{ color: current === 'setups' ? 'var(--gold-light)' : 'var(--text-primary)', background: 'none' }}
+          onClick={() => { onSelect('setups'); setSidebarOpen(false); }}
+        >
+          <span className="text-base">🎒</span>
+          Role Setups
+        </button>
 
         {/* Plugins link */}
         <button

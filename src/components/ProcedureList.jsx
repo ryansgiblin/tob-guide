@@ -29,6 +29,15 @@ export default function ProcedureList({ steps = [] }) {
                   <VideoEmbed video={s.video} />
                 </div>
               )}
+              {s.image && (
+                <div className="mt-2">
+                  <img
+                    src={s.image}
+                    alt="Step visual"
+                    style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 4, border: '1px solid var(--border)', display: 'block' }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </li>

@@ -1,8 +1,6 @@
-import { plugins } from '../data/plugins';
-
 const CATEGORY_ORDER = ['Raids', 'Combat', 'Timing', 'QoL', 'Performance'];
 
-export default function PluginPage() {
+export default function PluginPage({ plugins = [] }) {
   const categories = CATEGORY_ORDER.filter((cat) =>
     plugins.some((p) => p.category === cat)
   );

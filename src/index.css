@@ -86,3 +86,26 @@ h1, h2, h3, .font-display {
 .plugin-card:hover { border-color: var(--gold-dark); transform: translateY(-1px); }
 
 .tip-callout { background: #1a1a10; border-left: 3px solid var(--gold-dark); }
+
+/* Quadrant role panels */
+.role-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+/* Edit mode */
+.edit-mode .role-panel { border-color: var(--gold-dark); }
+.edit-mode [contenteditable] { cursor: text; }
+.edit-mode [contenteditable]:focus {
+  outline: 1px solid var(--gold);
+  background: #1a1a10;
+  border-radius: 2px;
+}
+[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-dim);
+  pointer-events: none;
+}
