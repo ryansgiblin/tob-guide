@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --gold: #c8a951;
+  --gold-light: #e8c97a;
+  --gold-dark: #9a7a2a;
+  --bg-deep: #0d0d0f;
+  --bg-panel: #141416;
+  --bg-card: #1a1a1e;
+  --bg-hover: #22222a;
+  --border: #2a2a35;
+  --text-primary: #e8e4d8;
+  --text-muted: #8a8070;
+  --text-dim: #5a5450;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.03em;
+}
+
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-dark), transparent);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-panel); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+
+.sidebar-item {
+  transition: all 0.15s ease;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+.sidebar-item:hover { background: var(--bg-hover); border-left-color: var(--gold-dark); }
+.sidebar-item.active { background: var(--bg-hover); border-left-color: var(--gold); color: var(--gold-light); }
+
+.tab-btn {
+  transition: all 0.15s ease;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: 'Inter', sans-serif;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { border-bottom-color: var(--gold); color: var(--gold-light); }
+
+.role-btn {
+  transition: all 0.15s ease;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.role-btn:hover { border-color: var(--gold-dark); color: var(--text-primary); }
+.role-btn.active { border-color: var(--gold); background: #1e1a10; color: var(--gold-light); }
+
+.step-card { border-left: 2px solid var(--border); transition: border-color 0.15s; }
+.step-card:hover { border-left-color: var(--gold-dark); }
+
+.plugin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.plugin-card:hover { border-color: var(--gold-dark); transform: translateY(-1px); }
+
+.tip-callout { background: #1a1a10; border-left: 3px solid var(--gold-dark); }
