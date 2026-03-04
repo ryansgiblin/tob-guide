@@ -18,11 +18,8 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function signIn(password) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: import.meta.env.VITE_ADMIN_EMAIL,
-      password,
-    });
+  async function signIn(email, password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   }
 

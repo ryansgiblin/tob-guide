@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 
 export default function PasswordModal({ isOpen, onClose, signIn }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -10,7 +11,7 @@ export default function PasswordModal({ isOpen, onClose, signIn }) {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { error } = await signIn(password);
+    const { error } = await signIn(email, password);
     if (error) {
       setError('Incorrect password.');
       setLoading(false);
@@ -21,6 +22,7 @@ export default function PasswordModal({ isOpen, onClose, signIn }) {
   }
 
   function handleClose() {
+    setEmail('');
     setPassword('');
     setError('');
     onClose();
@@ -49,11 +51,27 @@ export default function PasswordModal({ isOpen, onClose, signIn }) {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 4,
+                padding: '0.5rem 0.75rem',
+                color: 'var(--text-primary)',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+            <input
               type="password"
-              placeholder="Enter clan password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoFocus
               style={{
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
@@ -88,14 +106,14 @@ export default function PasswordModal({ isOpen, onClose, signIn }) {
               </button>
               <button
                 type="submit"
-                disabled={loading || !password}
+                disabled={loading || !email || !password}
                 style={{
                   background: 'var(--bg-hover)',
                   border: '1px solid var(--gold-dark)',
                   borderRadius: 4,
                   padding: '0.4rem 0.9rem',
                   color: 'var(--gold-light)',
-                  cursor: loading || !password ? 'not-allowed' : 'pointer',
+                  cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
                   fontSize: 13,
                   opacity: loading || !password ? 0.6 : 1,
                 }}
