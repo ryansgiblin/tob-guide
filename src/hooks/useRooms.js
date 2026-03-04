@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
+// Transforms a raw Supabase room row (with nested room_setup, roles, steps)
+// into the shape the UI components expect.
 function shapeRoom(room) {
   const setup = room.room_setup?.[0] ?? {};
   const roles = (room.roles ?? [])
@@ -13,12 +15,12 @@ function shapeRoom(room) {
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((s, i) => ({
           id: s.id,
-          step: i + 1,
+          step: i + 1,         // display number derived from sorted position
           sort_order: s.sort_order,
           text: s.text,
           tip: s.tip || '',
           video: s.video ?? null,
-          image: s.image ?? null,
+          image: s.image ?? null, // public URL from step-media storage bucket
         })),
       videos: [],
     }));
@@ -40,6 +42,9 @@ function shapeRoom(room) {
   };
 }
 
+// Fetches all rooms with their setup, roles, and steps from Supabase.
+// Returns { rooms, loading, error, refetch } — refetch is called after edits
+// to sync UI with the latest DB state.
 export function useRooms() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);

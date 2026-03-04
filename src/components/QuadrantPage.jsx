@@ -4,6 +4,8 @@ import RolePanel from './RolePanel';
 import EditToolbar from './EditToolbar';
 import PasswordModal from './PasswordModal';
 
+// Returns CSS grid-template-columns for 1–4 roles.
+// 4 roles → 2×2 quadrant layout (the standard for this guide).
 function gridCols(count) {
   if (count === 1) return '1fr';
   if (count === 2) return '1fr 1fr';
@@ -23,16 +25,18 @@ export default function QuadrantPage({ room, isAdmin, signIn, signOut, saveStatu
         onToggle={isAdmin ? signOut : () => setModalOpen(true)}
       />
 
-      {/* Quadrant grid — scrollable */}
-      <div className={`flex-1 overflow-y-auto p-4${isAdmin ? ' edit-mode' : ''}`}>
+      {/* Quadrant grid — panels scroll internally */}
+      <div className={`flex-1 overflow-hidden p-4${isAdmin ? ' edit-mode' : ''}`}>
         <div
           className="quadrant-grid"
           data-roles={room.roles.length}
           style={{
             display: 'grid',
             gap: '1rem',
-            alignItems: 'start',
+            height: '100%',
+            alignItems: 'stretch',
             gridTemplateColumns: gridCols(room.roles.length),
+            gridTemplateRows: room.roles.length === 4 ? '1fr 1fr' : '1fr',
           }}
         >
           {room.roles.map((role) => (

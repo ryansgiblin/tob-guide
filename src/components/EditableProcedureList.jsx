@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import MediaModal from './MediaModal';
 
 const UpIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
@@ -12,11 +13,26 @@ const ImageIcon = () => (
     <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
   </svg>
 );
+const VideoIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3"/>
+  </svg>
+);
 
+// Edit-mode step list for a single role.
+// - Text/tip: contenteditable divs, auto-save to Supabase on blur
+// - Reorder: Up/Down buttons swap sort_order between adjacent steps
+// - Delete: first click arms confirm (✓), second click executes
+// - Images: uploaded to Supabase Storage (step-media bucket), public URL saved to steps.image
+// - All mutations call onDataChange() to refetch and sync UI
 export default function EditableProcedureList({ steps, roomId, roleId, setSaveStatus, onDataChange }) {
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [uploading, setUploading] = useState(null);
-  const fileInputRefs = useRef({});
+  const [confirmDelete, setConfirmDelete] = useState(null); // stepId awaiting delete confirm
+  const [uploading, setUploading] = useState(null);         // stepId currently uploading image
+  const [uploadingVideo, setUploadingVideo] = useState(null); // stepId currently uploading video
+  const [showYouTubeInput, setShowYouTubeInput] = useState(null); // stepId with youtube input open
+  const [mediaUrl, setMediaUrl] = useState(null);           // url for MediaModal
+  const fileInputRefs = useRef({});                         // keyed by stepId for programmatic click
+  const videoInputRefs = useRef({});                        // keyed by stepId for video upload
 
   async function handleSaveField(stepId, field, value) {
     setSaveStatus('saving');
@@ -57,6 +73,53 @@ export default function EditableProcedureList({ steps, roomId, roleId, setSaveSt
   async function handleRemoveImage(stepId) {
     setSaveStatus('saving');
     const { error } = await supabase.from('steps').update({ image: null }).eq('id', stepId);
+    setSaveStatus(error ? 'error' : 'saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
+    if (!error) onDataChange();
+  }
+
+  async function handleUploadVideo(stepId, file) {
+    if (!file) return;
+    setUploadingVideo(stepId);
+    setSaveStatus('saving');
+
+    const ext = file.name.split('.').pop();
+    const path = `steps/${stepId}-video-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('step-media')
+      .upload(path, file, { contentType: file.type });
+
+    if (uploadError) {
+      console.error('Video upload error:', uploadError);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      setUploadingVideo(null);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('step-media').getPublicUrl(path);
+    const { error: dbError } = await supabase.from('steps').update({ video: publicUrl }).eq('id', stepId);
+    setSaveStatus(dbError ? 'error' : 'saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
+    setUploadingVideo(null);
+    if (!dbError) onDataChange();
+  }
+
+  async function handleSaveYouTubeUrl(stepId, url) {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    setSaveStatus('saving');
+    const { error } = await supabase.from('steps').update({ video: trimmed }).eq('id', stepId);
+    setSaveStatus(error ? 'error' : 'saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
+    setShowYouTubeInput(null);
+    if (!error) onDataChange();
+  }
+
+  async function handleRemoveVideo(stepId) {
+    setSaveStatus('saving');
+    const { error } = await supabase.from('steps').update({ video: null }).eq('id', stepId);
     setSaveStatus(error ? 'error' : 'saved');
     setTimeout(() => setSaveStatus('idle'), 2000);
     if (!error) onDataChange();
@@ -185,6 +248,89 @@ export default function EditableProcedureList({ steps, roomId, roleId, setSaveSt
                   ref={(el) => { fileInputRefs.current[step.id] = el; }}
                   onChange={(e) => { handleUploadImage(step.id, e.target.files[0]); e.target.value = ''; }}
                 />
+
+                {/* Video section */}
+                <div style={{ marginTop: '0.4rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+                  {step.video ? (
+                    <>
+                      <button
+                        onClick={() => setMediaUrl(step.video)}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          background: 'none', border: '1px solid var(--border)',
+                          borderRadius: 3, padding: '2px 8px',
+                          color: 'var(--gold-dark)', cursor: 'pointer', fontSize: 11,
+                        }}
+                      >
+                        <VideoIcon /> Preview video
+                      </button>
+                      <button
+                        onClick={() => handleRemoveVideo(step.id)}
+                        style={{
+                          background: 'none', border: 'none',
+                          color: '#f87171', cursor: 'pointer', fontSize: 11, padding: '2px 4px',
+                        }}
+                      >
+                        Remove video
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => videoInputRefs.current[step.id]?.click()}
+                        disabled={uploadingVideo === step.id}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          background: 'none', border: '1px dashed var(--border)',
+                          borderRadius: 3, padding: '2px 8px',
+                          color: 'var(--text-dim)', cursor: 'pointer', fontSize: 11,
+                          opacity: uploadingVideo === step.id ? 0.5 : 1,
+                        }}
+                      >
+                        <VideoIcon />
+                        {uploadingVideo === step.id ? 'Uploading...' : 'Upload video'}
+                      </button>
+                      <button
+                        onClick={() => setShowYouTubeInput(showYouTubeInput === step.id ? null : step.id)}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          background: 'none', border: '1px dashed var(--border)',
+                          borderRadius: 3, padding: '2px 8px',
+                          color: 'var(--text-dim)', cursor: 'pointer', fontSize: 11,
+                        }}
+                      >
+                        YouTube URL
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {showYouTubeInput === step.id && (
+                  <input
+                    type="url"
+                    placeholder="https://youtube.com/watch?v=..."
+                    autoFocus
+                    onBlur={(e) => handleSaveYouTubeUrl(step.id, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.currentTarget.blur();
+                      if (e.key === 'Escape') setShowYouTubeInput(null);
+                    }}
+                    style={{
+                      marginTop: '0.35rem', width: '100%',
+                      background: 'var(--bg-card)', border: '1px solid var(--border)',
+                      borderRadius: 3, padding: '3px 7px',
+                      color: 'var(--text-primary)', fontSize: 12, outline: 'none',
+                    }}
+                  />
+                )}
+
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  style={{ display: 'none' }}
+                  ref={(el) => { videoInputRefs.current[step.id] = el; }}
+                  onChange={(e) => { handleUploadVideo(step.id, e.target.files[0]); e.target.value = ''; }}
+                />
               </div>
 
               {/* Controls */}
@@ -247,6 +393,8 @@ export default function EditableProcedureList({ steps, roomId, roleId, setSaveSt
       >
         + Add Step
       </button>
+
+      <MediaModal url={mediaUrl} onClose={() => setMediaUrl(null)} />
     </div>
   );
 }
